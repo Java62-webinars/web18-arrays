@@ -32,23 +32,23 @@ Array.prototype.feel = function() {
 };
 
 //======НЕВЕРНОЕ РЕШЕНИЕ====================
-const originalPush = Array.prototype.push;
-const originalPop = Array.prototype.pop;
-
-Array.prototype.push = function(...args) {
-    console.log(`Добавляем: ${args}`);
-    return originalPush.apply(this, args);
-};
-
-Array.prototype.pop = function() {
-    const item = originalPop.apply(this);
-    console.log(`Удалили: ${item}`);
-    return item;
-};
+// const originalPush = Array.prototype.push;
+// const originalPop = Array.prototype.pop;
+//
+// Array.prototype.push = function(...args) {
+//     console.log(`Добавляем: ${args}`);
+//     return originalPush.apply(this, args);
+// };
+//
+// Array.prototype.pop = function() {
+//     const item = originalPop.apply(this);
+//     console.log(`Удалили: ${item}`);
+//     return item;
+// };
 
 //========================Чуть лучше======================
 // const _push = Array.prototype.push;
-// let _logging = false;
+ let _logging = false;
 //
 // Array.prototype.push = function(...values) {
 //     const len = this.length;
@@ -97,32 +97,32 @@ Array.prototype.pop = function() {
 
 //========Совсем правильно
 // // --- отмечаем только те массивы, для которых хотим логи ---
-// const WATCHED = new WeakSet();
-// const watch = (arr) => (WATCHED.add(arr), arr);
-// const unwatch = (arr) => WATCHED.delete(arr);
-//
-// // --- флаг от повторного входа изнутри console.log ---
-//
-// const safeLog = (...args) => {
-//     if (_logging) return;
-//     _logging = true;
-//     try { console.log(...args); } finally { _logging = false; }
-// };
-//
-// // --- push: без apply/call, со строгой семантикой ---
-// Array.prototype.push = function (...values) {
-//     let n = this.length;
-//     for (let i = 0; i < values.length; i++) {
-//         this[n] = values[i];
-//         n++;
-//     }
-//     this.length = n;
-//
-//     if (values.length && WATCHED.has(this)) {
-//         safeLog('you added to array:', ...values);
-//     }
-//     return n; // стандарт: возвращаем новую длину
-// };
+const WATCHED = new WeakSet();
+const watch = (arr) => (WATCHED.add(arr), arr);
+const unwatch = (arr) => WATCHED.delete(arr);
+
+// --- флаг от повторного входа изнутри console.log ---
+
+const safeLog = (...args) => {
+    if (_logging) return;
+    _logging = true;
+    try { console.log(...args); } finally { _logging = false; }
+};
+
+// --- push: без apply/call, со строгой семантикой ---
+Array.prototype.push = function (...values) {
+    let n = this.length;
+    for (let i = 0; i < values.length; i++) {
+        this[n] = values[i];
+        n++;
+    }
+    this.length = n;
+
+    if (values.length && WATCHED.has(this)) {
+        safeLog('you added to array:', ...values);
+    }
+    return n; // стандарт: возвращаем новую длину
+};
 //
 // // --- pop: без apply/call, со строгой семантикой ---
 // Array.prototype.pop = function () {
@@ -146,21 +146,31 @@ Array.prototype.pop = function() {
 
 // ---------- демонстрация ----------
 
-// логи ТОЛЬКО для помеченного массива:
-const a = watch(['a', 'b', 'c']);
+//логи ТОЛЬКО для помеченного массива:
+let a = watch(['a', 'b', 'c']);
 a.push('d', 'e');   // лог
 a.pop();            // лог
-
+a=null;
 // для непомеченного — тишина:
 const b = ['x', 'y'];
 b.push('z');        // нет лога
 b.pop();            // нет лога
 
 
-console.log([].feel());
-console.log(["a", "b", "c"].feel());
-console.log(arr.feel());
-const planets = ["Mercury", "Venus"];
-planets.push("Earth");
-//planets.pop();
-console.log(planets);
+const WEAKSET = new WeakSet();
+//GC удаляет объекты из WeakSet тогда, когда они перестают существовать где-то еще
+
+const NEWSET = new Set();
+//Ссылки на объекты будут существовать до того момента, пока существует Set или до удаления объектов из Set
+
+
+
+
+// console.log([].feel());
+// console.log(["a", "b", "c"].feel());
+// console.log(arr.feel());
+// const planets = ["Mercury", "Venus"];
+// planets.push("Earth");
+// //planets.pop();
+// console.log(planets.toString());
+// planets.pop();
